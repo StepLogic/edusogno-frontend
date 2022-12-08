@@ -458,24 +458,26 @@ export default function CalenderSm() {
       //   overflow: "hidden",
       // }}
     >
-      <div
-        id="observerBox"
-        className={s.observerBox}
-        style={{
-          // minHeight: 50,
-          // height: "auto",
-          width: "100%",
-          height: `${height * 0.03}px`,
-          // paddingBottom: "2rem",
-        }}
-      >
-        {observerNode && (
-          <Header
-            setObserveNode={setObserverNode}
-            calendarValues={observerNode}
-          />
-        )}
-      </div>
+      {height && (
+        <div
+          id="observerBox"
+          className={s.observerBox}
+          style={{
+            // minHeight: 50,
+            // height: "auto",
+            width: "100%",
+            height: `${height * 0.03}px`,
+            // paddingBottom: "2rem",
+          }}
+        >
+          {observerNode && (
+            <Header
+              setObserveNode={setObserverNode}
+              calendarValues={observerNode}
+            />
+          )}
+        </div>
+      )}
       <div
         id={"containerBox"}
         className="text-white w-full gap-6 overflow-hidden"
