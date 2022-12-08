@@ -80,6 +80,7 @@
   }
   .root li {
     width: 60%;
+    max-width: 200px;
   }
   .label,
   .item p {

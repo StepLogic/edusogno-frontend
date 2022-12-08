@@ -41,6 +41,7 @@ function SideMenu(props: Props) {
         return r.type === "item" ? (
           <li key={uuid()}>
             <NavLink
+              onClick={() => handleClose && handleClose()}
               to={r.path || r.value}
               className={({ isActive }) => cn(s.item, { [s.active]: isActive })}
             >

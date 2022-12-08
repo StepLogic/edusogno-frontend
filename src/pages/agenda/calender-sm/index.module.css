@@ -134,7 +134,7 @@
 }
 .observerBox {
   background: var(--clr-violet-100);
-  display: flex;
+  display: block;
 }
 /* .observerBox > div {
   display: none;

@@ -14,7 +14,7 @@ export function Main() {
   const theme = useTheme();
   const isSmallSize = useMediaQuery(theme.breakpoints.down("lg"));
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full overflow-hidden !px-0">
       {!isSmallSize ? <CalenderLg /> : <CalenderSm />}
     </div>
   );

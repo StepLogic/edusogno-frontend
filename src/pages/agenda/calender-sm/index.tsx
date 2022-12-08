@@ -11,6 +11,37 @@ import BxInfiniteScroll from "./bx-infinite-scroll";
 import Event, { EventProps } from "./event";
 import { CalendarValues, Days, Months, renderCalendar } from "./index.logic";
 import s from "./index.module.css";
+// Hook
+function useWindowSize() {
+  // Initialize state with undefined width/height so server and client renders match
+  // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+
+  useEffect(() => {
+    // Handler to call on window resize
+    function handleResize() {
+      // Set window width/height to state
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []); // Empty array ensures that effect is only run on mount
+
+  return windowSize;
+}
 const getEvents = () => {
   const eventDates = moment({ hour: 9, minute: 30 });
   const events: EventProps[] = [
@@ -357,10 +388,10 @@ const DateHeading = ({
               moment(entry.target.getAttribute("data-date"), "MM-YYYY").toDate()
             )
           );
-        entry.target.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        // entry.target.scrollIntoView({
+        //   behavior: "smooth",
+        //   block: "start",
+        // });
         entry.target.classList.add("scale-0");
 
         entry.target.classList.add("max-h-[0]");
@@ -391,6 +422,8 @@ export default function CalenderSm() {
   const [loadingNext, setLoadingNext] = useState(false);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
 
+  const { height } = useWindowSize();
+
   const handleNextDataLoad = () => {
     setLoadingNext(true);
     setTimeout(() => {
@@ -420,7 +453,7 @@ export default function CalenderSm() {
 
   return (
     <div
-      className="flex flex-col h-full w-full pt-[3vh]"
+      className="flex flex-col h-full gap-4 w-full pt-[3vh] px-3 sm:px-6"
       // style={{
       //   overflow: "hidden",
       // }}
@@ -429,10 +462,11 @@ export default function CalenderSm() {
         id="observerBox"
         className={s.observerBox}
         style={{
-          minHeight: 10,
-          height: "auto",
+          // minHeight: 50,
+          // height: "auto",
           width: "100%",
-          paddingBottom: "2rem",
+          height: `${height * 0.03}px`,
+          // paddingBottom: "2rem",
         }}
       >
         {observerNode && (
@@ -444,11 +478,13 @@ export default function CalenderSm() {
       </div>
       <div
         id={"containerBox"}
-        className="text-white mb-auto  w-full grid grid-cols-1 gap-6 overflow-hidden"
-        style={{
-          boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
-          height: "90vh",
-        }}
+        className="text-white w-full gap-6 overflow-hidden"
+        style={
+          height && {
+            boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
+            height: `${height * 0.69}px`,
+          }
+        }
       >
         <BxInfiniteScroll
           loadingComponent={
@@ -477,7 +513,7 @@ export default function CalenderSm() {
                     date={_item}
                   />
                 )}
-                <Fragment key={value}>
+                <Fragment key={uuid()}>
                   <EventGridItem
                     data-todaytarget={`${_item.isSame(moment(), "day")}`}
                     data-dateItem={`${_item.format("MM-YYYY")}`}
