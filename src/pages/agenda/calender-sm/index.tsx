@@ -16,8 +16,8 @@ function useWindowSize() {
   // Initialize state with undefined width/height so server and client renders match
   // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
   const [windowSize, setWindowSize] = useState({
-    width: undefined,
-    height: undefined,
+    width: 0,
+    height: 0,
   });
 
   useEffect(() => {
@@ -211,7 +211,8 @@ const Header = ({
             onClick={() => scrollToday()}
             // id={`todayButtonCalendar-${id}`}
             className={cn(
-              "!py-0 !capitalize !hidden ml-auto !text-[13px] leading-[99.5%] !font-[500] items-center justify-center"
+              // "!py-0 !capitalize !h-[26px]  ml-auto !text-[13px] leading-[99.5%] !font-[500] items-center justify-center"
+              "!h-[26px]"
             )}
             color="error"
             variant="contained"
@@ -458,35 +459,32 @@ export default function CalenderSm() {
       //   overflow: "hidden",
       // }}
     >
-      {height && (
-        <div
-          id="observerBox"
-          className={s.observerBox}
-          style={{
-            // minHeight: 50,
-            // height: "auto",
-            width: "100%",
-            height: `${height * 0.03}px`,
-            // paddingBottom: "2rem",
-          }}
-        >
-          {observerNode && (
-            <Header
-              setObserveNode={setObserverNode}
-              calendarValues={observerNode}
-            />
-          )}
-        </div>
-      )}
+      <div
+        id="observerBox"
+        className={s.observerBox}
+        style={{
+          // minHeight: 50,
+          // height: "auto",
+          width: "100%",
+          height: `${height * 0.03}px`,
+          // paddingBottom: "2rem",
+        }}
+      >
+        {observerNode && (
+          <Header
+            setObserveNode={setObserverNode}
+            calendarValues={observerNode}
+          />
+        )}
+      </div>
+
       <div
         id={"containerBox"}
         className="text-white w-full gap-6 overflow-hidden"
-        style={
-          height && {
-            boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
-            height: `${height * 0.69}px`,
-          }
-        }
+        style={{
+          boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
+          height: `${height * 0.69}px`,
+        }}
       >
         <BxInfiniteScroll
           loadingComponent={
