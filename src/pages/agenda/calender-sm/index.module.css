@@ -133,7 +133,7 @@
   color: var(--clr-red-100);
 }
 .observerBox {
-  background: var(--clr-violet-100);
+  /* background: var(--clr-violet-100); */
   display: block;
 }
 /* .observerBox > div {
