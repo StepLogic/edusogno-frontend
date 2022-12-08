@@ -483,7 +483,7 @@ export default function CalenderSm() {
         className="text-white w-full gap-6 overflow-hidden"
         style={{
           boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
-          height: `${height * 0.3}px`,
+          height: `${height * 0.69}px`,
         }}
       >
         <BxInfiniteScroll
