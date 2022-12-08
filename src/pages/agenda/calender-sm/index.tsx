@@ -1,16 +1,43 @@
-import Button from '@mui/material/Button';
-import cn from 'classnames';
-import { concat, filter, map } from 'lodash';
-import moment, { Moment } from 'moment';
-import { Fragment, ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import Button from "@mui/material/Button";
+import cn from "classnames";
+import { concat, filter, map } from "lodash";
+import moment, { Moment } from "moment";
+import { Fragment, ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { CaChevronDown } from '../../../components/Icons';
-import { uuid } from '../../../utils/Utils';
-import BxInfiniteScroll from './bx-infinite-scroll';
-import Event, { EventProps } from './event';
-import { CalendarValues, Days, Months, renderCalendar } from './index.logic';
-import s from './index.module.css';
+import { CaChevronDown } from "../../../components/Icons";
+import { uuid } from "../../../utils/Utils";
+import BxInfiniteScroll from "./bx-infinite-scroll";
+import Event, { EventProps } from "./event";
+import { CalendarValues, Days, Months, renderCalendar } from "./index.logic";
+import s from "./index.module.css";
+const getEvents = () => {
+  const eventDates = moment({ hour: 9, minute: 30 });
+  const events: EventProps[] = [
+    {
+      title: "Speaking Class",
+      topic: "Adjectives and Adverbs",
+      date: eventDates.clone(),
+      duration: 45,
+    },
+  ];
+
+  eventDates.add(2, "hours");
+  events.push({
+    title: "Speaking Class",
+    topic: "Adjectives and Adverbs",
+    date: eventDates.clone(),
+    duration: 45,
+  });
+  eventDates.add(1, "month");
+  events.push({
+    title: "Speaking Class",
+    topic: "Adjectives and Adverbs",
+    date: eventDates.clone(),
+    duration: 45,
+  });
+  return events;
+};
 
 function EventGridItem(props: { date: Moment; events?: Array<EventProps> }) {
   const { events, date, ...rest } = props;
@@ -49,29 +76,37 @@ type DayType = {
   type: "past" | "now" | "future";
   setOpenModal: Function;
   requestClose: Function;
+  events?: EventProps[];
 };
 const Day = (props: DayType) => {
-  const { value, type, showMonth = false, setOpenModal, requestClose } = props;
-  const event: EventProps = {
-    title: "Speaking Class",
-    topic: "",
-    date: value.hour(9),
-    duration: 45,
-  };
-  const [events, setEvents] = useState<Array<EventProps>>([]);
+  const {
+    value,
+    type,
+    showMonth = false,
+    setOpenModal,
+    requestClose,
+    events,
+  } = props;
+  // const event: EventProps = {
+  //   title: "Speaking Class",
+  //   topic: "",
+  //   date: value.hour(9),
+  //   duration: 45,
+  // };
+  // const [events, setEvents] = useState<Array<EventProps>>([]);
 
-  const addEvent = () => {
-    events.length < 2 && setEvents((r) => [...r, event]);
-  };
+  // const addEvent = () => {
+  //   events.length < 2 && setEvents((r) => [...r, event]);
+  // };
 
   if (!Number.isNaN(value.date()))
     return (
       <>
         <div
           id={"calendar"}
-          onClick={() => {
-            addEvent();
-          }}
+          // onClick={() => {
+          //   addEvent();
+          // }}
           className={cn(s.dateItem, {
             [s.prevDays]: type === "past",
             [s.nextDays]: type === "future",
@@ -80,15 +115,17 @@ const Day = (props: DayType) => {
           })}
         >
           <div className="flex flex-row justify-center items-center gap-[1px] absolute top-[-8px] left-0 right-0">
-            {events.map((event) => {
-              return (
-                <div
-                  className={cn(s.dot, "text-white", {
-                    ["text-[#CCCCCC]"]: type === "past" || type === "future",
-                  })}
-                />
-              );
-            })}
+            {events &&
+              events.length > 0 &&
+              events.map((event) => {
+                return (
+                  <div
+                    className={cn(s.dot, "text-white", {
+                      ["text-[#CCCCCC]"]: !moment().isSame(event.date),
+                    })}
+                  />
+                );
+              })}
           </div>
           <p className={cn(s.day)}>{value.date()}</p>
         </div>
@@ -172,6 +209,16 @@ const Header = ({
                   setOpenModal={() => {}}
                   requestClose={() => {}}
                   showMonth={index === 0}
+                  events={filter(getEvents(), (event) => {
+                    return event.date.isSame(
+                      moment({
+                        day: i,
+                        month: 11,
+                        year: calendarValues.year - 1,
+                      }),
+                      "day"
+                    );
+                  })}
                   value={moment({
                     day: i,
                     month: 11,
@@ -186,6 +233,16 @@ const Header = ({
                 setOpenModal={() => {}}
                 requestClose={() => {}}
                 showMonth={index === 0}
+                events={filter(getEvents(), (event) => {
+                  return event.date.isSame(
+                    moment({
+                      day: i,
+                      month: calendarValues.month - 1,
+                      year: calendarValues.year,
+                    }),
+                    "day"
+                  );
+                })}
                 value={moment({
                   day: i,
                   month: calendarValues.month - 1,
@@ -200,6 +257,16 @@ const Header = ({
               key={uuid()}
               setOpenModal={() => {}}
               requestClose={() => {}}
+              events={filter(getEvents(), (event) => {
+                return event.date.isSame(
+                  moment({
+                    day: i,
+                    month: calendarValues.month,
+                    year: calendarValues.year,
+                  }),
+                  "day"
+                );
+              })}
               value={moment({
                 day: i,
                 month: calendarValues.month,
@@ -215,6 +282,16 @@ const Header = ({
                   key={uuid()}
                   setOpenModal={() => {}}
                   requestClose={() => {}}
+                  events={filter(getEvents(), (event) => {
+                    return event.date.isSame(
+                      moment({
+                        day: i,
+                        month: 0,
+                        year: calendarValues.year + 1,
+                      }),
+                      "day"
+                    );
+                  })}
                   value={moment({
                     day: i,
                     month: 0,
@@ -228,6 +305,16 @@ const Header = ({
                 key={uuid()}
                 setOpenModal={() => {}}
                 requestClose={() => {}}
+                events={filter(getEvents(), (event) => {
+                  return event.date.isSame(
+                    moment({
+                      day: i,
+                      month: calendarValues.month + 1,
+                      year: calendarValues.year,
+                    }),
+                    "day"
+                  );
+                })}
                 value={moment({
                   day: i,
                   month: calendarValues.month + 1,
@@ -308,7 +395,6 @@ export default function CalenderSm() {
     setLoadingNext(true);
     setTimeout(() => {
       const lastValue = items.at(-1) || 0;
-
       setItems((prevItems) =>
         concat(
           prevItems,
@@ -332,34 +418,6 @@ export default function CalenderSm() {
     }, 500);
   };
 
-  const getEvents = () => {
-    const eventDates = moment({ hour: 9, minute: 30 });
-    const events: EventProps[] = [
-      {
-        title: "Speaking Class",
-        topic: "Adjectives and Adverbs",
-        date: eventDates.clone(),
-        duration: 45,
-      },
-    ];
-
-    eventDates.add(2, "hours");
-    events.push({
-      title: "Speaking Class",
-      topic: "Adjectives and Adverbs",
-      date: eventDates.clone(),
-      duration: 45,
-    });
-    eventDates.add(1, "month");
-    events.push({
-      title: "Speaking Class",
-      topic: "Adjectives and Adverbs",
-      date: eventDates.clone(),
-      duration: 45,
-    });
-    return events;
-  };
-  // const event: EventProps = ;
   return (
     <div
       className="flex flex-col h-full w-full pt-[3vh]"

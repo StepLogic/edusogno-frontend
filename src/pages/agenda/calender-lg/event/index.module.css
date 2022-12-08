@@ -28,13 +28,14 @@
   flex-direction: column;
   width: 100%;
   overflow: hidden;
+  gap: 5px;
 }
 .textBox .time {
   font-family: "Poppins";
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
-  line-height: 124%;
+  line-height: 100%;
   color: #2d224c;
   text-align: left;
   white-space: nowrap;
