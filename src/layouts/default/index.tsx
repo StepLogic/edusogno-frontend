@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import Calender from "../../pages/agenda/calender-lg/index.waste";
+
 import s from "./index.module.css";
 import SideMenu from "./side-menu";
 import { Routes, Route, Outlet, Link } from "react-router-dom";

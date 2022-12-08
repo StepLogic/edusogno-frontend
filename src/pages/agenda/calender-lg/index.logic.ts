@@ -70,33 +70,3 @@ export const renderCalendar = (date: Date): CalendarValues => {
     month: date.getMonth(),
   };
 };
-
-export const getDate = (month: number, year: number): Array<string[]> => {
-  var calendar: Array<string[]> = [];
-  const startDate = moment([year, month])
-    .clone()
-    .startOf("month")
-    .startOf("isoWeek");
-  const endDate = moment([year, month]).clone().endOf("month");
-  const day = startDate.clone().subtract(1, "day");
-
-  while (day.isBefore(endDate, "day")) {
-    calendar.push(
-      Array(7)
-        .fill(0)
-        .map(() => day.add(1, "day").clone().format("DD"))
-    );
-  }
-  return calendar;
-};
-export const isExtraDays = (week, date) => {
-  if (week === 0 && date > 10) {
-    return true;
-  } else if (week === 5 && date < 10) {
-    return true;
-  } else if (week === 4 && date < 10) {
-    return true;
-  } else {
-    return false;
-  }
-};
