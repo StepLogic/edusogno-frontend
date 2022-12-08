@@ -1,17 +1,20 @@
-import moment, { Moment } from "moment";
-import { useState, ReactNode, useEffect, Fragment } from "react";
-import s from "./index.module.css";
-import Event, { EventProps } from "./event";
-import { uuid } from "../../../utils/Utils";
-import Button from "@mui/material/Button";
-import { CaChevronDown } from "../../../components/Icons";
-import { CalendarValues, Months, Days, renderCalendar } from "./index.logic";
-import cn from "classnames";
-function EventGridItem(props: {
-  date: Moment;
-  events?: Array<EventProps | string>;
-}) {
+import Button from '@mui/material/Button';
+import cn from 'classnames';
+import { concat, filter, map } from 'lodash';
+import moment, { Moment } from 'moment';
+import { Fragment, ReactNode, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { CaChevronDown } from '../../../components/Icons';
+import { uuid } from '../../../utils/Utils';
+import BxInfiniteScroll from './bx-infinite-scroll';
+import Event, { EventProps } from './event';
+import { CalendarValues, Days, Months, renderCalendar } from './index.logic';
+import s from './index.module.css';
+
+function EventGridItem(props: { date: Moment; events?: Array<EventProps> }) {
   const { events, date, ...rest } = props;
+  const navigate = useNavigate();
   return (
     <div {...rest} className={s.gridItem}>
       <div className={"flex flex-col text-white"}>
@@ -21,18 +24,13 @@ function EventGridItem(props: {
         <p className="text-base font-[700] text-center">{date.format("DD")}</p>
       </div>
       <div className="w-full h-full grid grid-cols-1 gap-[5px]">
-        {events ? (
-          events.map(() => (
+        {events && events.length > 0 ? (
+          events.map((event) => (
             <Event
               title={"Speaking Class"}
               topic={"Food"}
-              date={moment({
-                day: 1,
-                month: 2,
-                year: 2020,
-                hour: 9,
-                minute: 0,
-              })}
+              date={event.date}
+              onClick={() => navigate("event")}
               duration={45}
             />
           ))
@@ -98,24 +96,32 @@ const Day = (props: DayType) => {
     );
   return <></>;
 };
-const Header = ({ calendarValues }: { calendarValues: CalendarValues }) => {
+const Header = ({
+  calendarValues,
+  setObserveNode,
+}: {
+  setObserveNode: Function;
+  calendarValues: CalendarValues;
+}) => {
   const [show, setShowCalendar] = useState(false);
   const scrollToday = () => {
     const todayElement = document.querySelector(`[data-todaytarget="true"]`);
     const containerBox = document.querySelector("#containerBox");
-    if (todayElement != null && containerBox !== null) {
-      // containerBox?.scroll({
-      //   top: todayElement.getBoundingClientRect().top,
-      //   behavior: "smooth",
-      // });
-      todayElement.scrollIntoView();
+    if (todayElement != null) {
+      const attribute = todayElement.getAttribute("data-dateItem");
+      // const header = document.querySelectorAll(
+      //   `[data-dateItem="${attribute}"]`
+      // )[0];
+      // header?.scrollIntoView({ behavior: "smooth" });
+      setObserveNode(renderCalendar(moment(attribute, "MM-YYYY").toDate()));
+      todayElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
   useEffect(() => {
     scrollToday();
   }, []);
   return (
-    <div className={cn(s.calendar, "header px-6")}>
+    <div className={cn(s.calendar, "header relative")}>
       <div className="flex flex-row items-center">
         <div className={cn(s.dateHeading, "!mt-0")}>
           {Months[calendarValues.month]}&nbsp;
@@ -146,7 +152,12 @@ const Header = ({ calendarValues }: { calendarValues: CalendarValues }) => {
           </Button>
         </div>
       </div>
-      <div className={cn({ hidden: !show })}>
+      <div
+        className={cn(
+          { hidden: !show },
+          `absolute top-[32px] bg-[var(--clr-violet-100)] w-[100%]`
+        )}
+      >
         <div className={cn(s.daysLabels, "mt-1")}>
           {Days.map((day) => (
             <p key={uuid()}>{day.slice(0, 3)}</p>
@@ -244,12 +255,11 @@ const DateHeading = ({
     const containerBox = document.querySelector("#containerBox");
     let options = {
       root: containerBox,
-      rootMargin: "0px 0px -50% 0px",
+      rootMargin: "10% 0px -80% 0px",
       threshold: 1.0,
     };
     const heading = document.querySelector(`[data-heading="${id}"]`);
     // console.log(headings);
-
     let observerTwo = new IntersectionObserver((entries) => {
       const [entry] = entries;
       if (entry.isIntersecting) {
@@ -257,12 +267,19 @@ const DateHeading = ({
         setObserverNode &&
           setObserverNode(
             renderCalendar(
-              moment(
-                entry.target.getAttribute("data-date"),
-                "DD-MM-YYYY"
-              ).toDate()
+              moment(entry.target.getAttribute("data-date"), "MM-YYYY").toDate()
             )
           );
+        entry.target.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        entry.target.classList.add("scale-0");
+
+        entry.target.classList.add("max-h-[0]");
+      } else {
+        entry.target.classList.remove("scale-0");
+        entry.target.classList.remove("max-h-[0]");
       }
     }, options);
 
@@ -280,209 +297,146 @@ const DateHeading = ({
   );
 };
 export default function CalenderSm() {
-  const [observerNode, setObserverNode] = useState<CalendarValues>(
-    renderCalendar(new Date())
+  const [observerNode, setObserverNode] = useState<CalendarValues>();
+  const [items, setItems] = useState<Array<number>>(
+    Array.from({ length: 10 }, (_, i) => i + 1)
   );
+  const [loadingNext, setLoadingNext] = useState(false);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
 
-  // handle populating dateItems
-  const BOX_HEIGHT = 60;
-  const BUFFER_BOXES = 10;
-  const [rewindCounter, setRewindCounter] = useState(0);
-  const [forwardCounter, setForwardCounter] = useState(100);
-  const [dates, setDates] = useState<number[]>([]);
-  function scrollListener(e: UIEvent) {
-    const bufferHeight = BOX_HEIGHT * BUFFER_BOXES;
-    if (e.target.scrollTop >= bufferHeight + BOX_HEIGHT) {
-      // scroll down
+  const handleNextDataLoad = () => {
+    setLoadingNext(true);
+    setTimeout(() => {
+      const lastValue = items.at(-1) || 0;
 
-      setForwardCounter((r) => r + 1);
-    } else if (e.target.scrollTop < bufferHeight) {
-      // console.log("down");
-      setRewindCounter((r) => r + 1);
-    }
-    generatePreviousDates();
-  }
-
-  const generatePreviousDates = () => {
-    const previousDates = [];
-    // const nextDates = [];
-    for (let i = rewindCounter; i--; i > 1) {
-      previousDates.push(i);
-    }
-    // const dates=
-    setDates(previousDates);
+      setItems((prevItems) =>
+        concat(
+          prevItems,
+          Array.from({ length: 10 }, (_, i) => lastValue + (i + 1))
+        )
+      );
+      setLoadingNext(false);
+    }, 500);
   };
-  useEffect(() => {
-    generatePreviousDates();
-  }, []);
 
+  const handlePreviousDataLoad = () => {
+    setLoadingPrevious(true);
+    setTimeout(() => {
+      setItems((prevItems) =>
+        concat(
+          Array.from({ length: 10 }, (_, i) => prevItems[0] - i).reverse(),
+          prevItems
+        )
+      );
+      setLoadingPrevious(false);
+    }, 500);
+  };
+
+  const getEvents = () => {
+    const eventDates = moment({ hour: 9, minute: 30 });
+    const events: EventProps[] = [
+      {
+        title: "Speaking Class",
+        topic: "Adjectives and Adverbs",
+        date: eventDates.clone(),
+        duration: 45,
+      },
+    ];
+
+    eventDates.add(2, "hours");
+    events.push({
+      title: "Speaking Class",
+      topic: "Adjectives and Adverbs",
+      date: eventDates.clone(),
+      duration: 45,
+    });
+    eventDates.add(1, "month");
+    events.push({
+      title: "Speaking Class",
+      topic: "Adjectives and Adverbs",
+      date: eventDates.clone(),
+      duration: 45,
+    });
+    return events;
+  };
+  // const event: EventProps = ;
   return (
     <div
-      id={"containerBox"}
-      onScroll={scrollListener}
-      className="text-white w-full h-[100%] grid grid-cols-1 gap-6  overflow-y-auto"
+      className="flex flex-col h-full w-full pt-[3vh]"
+      // style={{
+      //   overflow: "hidden",
+      // }}
     >
       <div
         id="observerBox"
         className={s.observerBox}
         style={{
-          // border: "1px solid red",
           minHeight: 10,
-          position: "fixed",
+          height: "auto",
           width: "100%",
-          left: 0,
-          right: 0,
-          // top: 0,
-          zIndex: 1,
+          paddingBottom: "2rem",
         }}
       >
-        <Header calendarValues={observerNode} />
+        {observerNode && (
+          <Header
+            setObserveNode={setObserverNode}
+            calendarValues={observerNode}
+          />
+        )}
       </div>
-      {dates.map((r, i) => {
-        const _item = moment();
-        _item.subtract(r, "days");
-        return (
-          <>
-            {_item.date() === 1 && (
-              <DateHeading
-                setObserverNode={setObserverNode}
-                data-date={`${_item.format("DD-MM-YYYY")}`}
-                date={_item}
-              />
-            )}
-            <Fragment key={i}>
-              <EventGridItem
-                data-todaytarget={`${_item.isSame(moment(), "day")}`}
-                date={_item}
-              />
-            </Fragment>
-          </>
-        );
-      })}
-
-      {Array(forwardCounter)
-        .fill({})
-        .map((r, i) => {
-          const _item = moment();
-          _item.add(i + 1, "days");
-          return (
-            <>
-              {_item.date() === 1 && (
-                <DateHeading
-                  setObserverNode={setObserverNode}
-                  data-date={`${_item.format("DD-MM-YYYY")}`}
-                  date={_item}
-                />
-              )}
-              <Fragment key={i}>
-                <EventGridItem
-                  data-todaytarget={`${_item.isSame(moment(), "day")}`}
-                  date={_item}
-                />
-              </Fragment>
-            </>
-          );
-        })}
+      <div
+        id={"containerBox"}
+        className="text-white mb-auto  w-full grid grid-cols-1 gap-6 overflow-hidden"
+        style={{
+          boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
+          height: "90vh",
+        }}
+      >
+        <BxInfiniteScroll
+          loadingComponent={
+            <div style={{ padding: "8px 16px" }}>Loading 5 more items...</div>
+          }
+          nextDataFn={handleNextDataLoad}
+          nextEnd={false}
+          nextLoading={loadingNext}
+          previousDataFn={handlePreviousDataLoad}
+          previousEnd={false}
+          previousLoading={loadingPrevious}
+        >
+          {map(items, (value: number) => {
+            const _item = moment();
+            if (value < 0) {
+              _item.subtract(Math.abs(value), "days");
+            } else {
+              _item.add(value, "days");
+            }
+            return (
+              <>
+                {_item.date() === 1 && (
+                  <DateHeading
+                    setObserverNode={setObserverNode}
+                    data-date={`${_item.format("MM-YYYY")}`}
+                    date={_item}
+                  />
+                )}
+                <Fragment key={value}>
+                  <EventGridItem
+                    data-todaytarget={`${_item.isSame(moment(), "day")}`}
+                    data-dateItem={`${_item.format("MM-YYYY")}`}
+                    date={_item}
+                    events={filter(getEvents(), (event) => {
+                      return event.date.isSame(_item, "day");
+                    })}
+                  />
+                </Fragment>
+              </>
+              // <div className="flex-row flex gap-4">
+              //   {_item.format("DD-MM-YYYY")} <p>{value}</p>
+              // </div>
+            );
+          })}
+        </BxInfiniteScroll>
+      </div>
     </div>
   );
 }
-
-// import moment from "moment";
-// import { useState, ReactNode, useEffect } from "react";
-// export default function CalenderSm() {
-//   const BOX_HEIGHT = 60;
-//   const BUFFER_BOXES = 10;
-//   const [rewindCounter, setRewindCounter] = useState(100);
-//   const [forwardCounter, setForwardCounter] = useState(100);
-//   const [dates, setDates] = useState<ReactNode[]>([]);
-//   function scrollListener(e: UIEvent) {
-//     const bufferHeight = BOX_HEIGHT * BUFFER_BOXES;
-//     if (e.target.scrollTop >= bufferHeight + BOX_HEIGHT) {
-//       // scroll down
-
-//       setForwardCounter((r) => r + 1);
-//     } else if (e.target.scrollTop < bufferHeight) {
-//       // console.log("down");
-//       setRewindCounter((r) => r + 1);
-//     }
-//     generatePreviousDates();
-//   }
-
-//   const generatePreviousDates = () => {
-//     const previousDates = [];
-//     const nextDates = [];
-//     for (let i = rewindCounter; i--; i > 0) {
-//       previousDates.push(
-//         <p>{moment().subtract(i, "days").format("DD-MM-YYYY")}</p>
-//       );
-//     }
-//     for (let i = 1; i--; i > forwardCounter) {
-//       nextDates.push(<p>{moment().add(i, "days").format("DD-MM-YYYY")}</p>);
-//     }
-//     // const dates=
-//     setDates(previousDates.concat(nextDates));
-//   };
-//   useEffect(() => {
-//     generatePreviousDates();
-//   }, []);
-//   return (
-//     <div
-//       onScroll={scrollListener}
-//       className="text-white w-full h-[50%] bg-black overflow-y-auto"
-//     >
-//       {dates.map((item) => item)}
-//     </div>
-//   );
-// }
-// import moment from "moment";
-// import { useState } from "react";
-// import InfiniteScroll from "react-bidirectional-infinite-scroll";
-
-// export default function CalenderSm() {
-//   const BOX_HEIGHT = 60;
-//   const BUFFER_BOXES = 10;
-//   const [rewindCounter, setRewindCounter] = useState(100);
-//   const [forwardCounter, setForwardCounter] = useState(100);
-
-//   const handleVerticalScroll = (position, previousPosition) => {
-//     const diffScroll = position - previousPosition;
-//     const directionDown = diffScroll > 0;
-//     if (directionDown) {
-//       setForwardCounter((r) => r + 1);
-//     } else {
-//       setRewindCounter((r) => r + 1);
-//     }
-//   };
-//   const generatePreviousDates = () => {
-//     const previousDates = [];
-//     const nextDates = [];
-//     for (let i = rewindCounter; i--; i > 0) {
-//       previousDates.push(
-//         <p>{moment().subtract(i, "days").format("DD-MM-YYYY")}</p>
-//       );
-//     }
-//     for (let i = 1; i--; i > forwardCounter) {
-//       nextDates.push(<p>{moment().add(i, "days").format("DD-MM-YYYY")}</p>);
-//     }
-//     return previousDates.concat(nextDates);
-//   };
-
-//   return (
-//     <div className="text-white">
-//       <InfiniteScroll
-//         // position={100}
-//         onScroll={handleVerticalScroll}
-//         // onReachBottom={(f) => {
-//         //   // console.log("f", f);
-//         //   loadNextMonth();
-//         // }}
-//         // onReachTop={(f) => {
-//         //   loadLastMonth();
-//         //   // console.log("top");
-//         // }}
-//       >
-//         {generatePreviousDates().map((item) => item)}
-//       </InfiniteScroll>
-//     </div>
-//   );
-// }

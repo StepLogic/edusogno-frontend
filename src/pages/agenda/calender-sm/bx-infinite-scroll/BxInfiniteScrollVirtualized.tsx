@@ -8,7 +8,7 @@ import React, {
   useRef,
   useLayoutEffect,
 } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { ScrollToOptions, useVirtualizer } from "@tanstack/react-virtual";
 
 import useScroll from "./useScroll";
 
@@ -24,8 +24,12 @@ interface Props {
   rows: Array<any>;
   virtualOptions?: any;
 }
+export type Ref = {
+  scrollToIndex: (index: number, { align, ...rest }: ScrollToOptions) => void;
+  containerRef: boolean | RefObject<HTMLDivElement>;
+};
 
-const BxInfiniteScrollVirtualized = forwardRef<ReactNode, Props>(
+const BxInfiniteScrollVirtualized = forwardRef<Ref, Props>(
   (
     {
       loadingComponent,
@@ -49,13 +53,16 @@ const BxInfiniteScrollVirtualized = forwardRef<ReactNode, Props>(
       size: rows.length,
       parentRef: containerRef as RefObject<HTMLDivElement>,
     });
-
-    useImperativeHandle(ref, () => {
-      return {
-        containerRef,
-        scrollToIndex,
-      };
-    });
+    // useImperativeHandle(ref, () => {
+    //   return {
+    //     containerRef,
+    //     scrollToIndex,
+    //   };
+    // });
+    useImperativeHandle(ref, () => ({
+      containerRef: containerRef,
+      scrollToIndex: scrollToIndex,
+    }));
 
     const anchorData = useRef<{ prevHeight: number; rowLength: number }>();
     const isPrependRef = useRef(false);

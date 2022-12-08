@@ -22,14 +22,16 @@ interface Props {
   previousEnd: boolean;
   previousLoading: boolean;
 }
-
-const BxInfiniteScroll = forwardRef<ReactNode, Props>(
+export type Ref = {
+  setReverseCol: Function;
+  containerRef: boolean | RefObject<HTMLDivElement>;
+};
+const BxInfiniteScroll = forwardRef<Ref, Props>(
   (
     {
       children,
       initialReverse = true,
       loadingComponent,
-
       nextDataFn,
       nextEnd,
       nextLoading,
@@ -37,14 +39,12 @@ const BxInfiniteScroll = forwardRef<ReactNode, Props>(
       previousEnd,
       previousLoading,
     }: Props,
-    ref,
+    ref
   ) => {
-    useImperativeHandle(ref, () => {
-      return {
-        setReverseCol,
-        containerRef,
-      };
-    });
+    useImperativeHandle(ref, () => ({
+      setReverseCol: setReverseCol,
+      containerRef: containerRef,
+    }));
 
     const [reverseCol, setReverseCol] = useState(initialReverse);
     const [reverseColValue, setReverseColValue] = useState<number | null>(null);
@@ -110,7 +110,7 @@ const BxInfiniteScroll = forwardRef<ReactNode, Props>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 BxInfiniteScroll.displayName = "BxInfiniteScroll";

@@ -5,6 +5,7 @@
   width: 100%;
   background: var(--clr-violet-100);
   box-sizing: border-box;
+  padding-top: 4vh;
 }
 .calendar {
   display: flex;
@@ -14,6 +15,7 @@
   background: var(--clr-violet-100);
   /* padding-top: min(49px, 4%) 19px 0 19px; */
   box-sizing: border-box;
+  height: auto;
 }
 .header {
   display: flex;
@@ -124,6 +126,7 @@
   display: grid;
   grid-template-columns: 30px auto;
   gap: 1rem;
+  @apply my-6;
 }
 
 .gridItem[data-todaytarget="true"] p {

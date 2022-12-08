@@ -30,7 +30,7 @@
   font-weight: 400;
   font-size: 13px;
   line-height: 124%;
-  color: #2d224c;
+  color: #2d224c !important;
   text-align: left;
 
   /* width: fit-content; */
@@ -42,7 +42,7 @@
   font-weight: 600;
   font-size: 13px;
   line-height: 124%;
-  color: #2d224c;
+  color: #2d224c !important;
   width: 80%;
   height: 16px;
   /* white-space: nowrap; */

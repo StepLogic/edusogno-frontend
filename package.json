@@ -16,6 +16,7 @@
     "@splidejs/react-splide": "^0.7.12",
     "@splidejs/splide-extension-auto-scroll": "^0.5.3",
     "@tanstack/react-virtual": "^3.0.0-beta.30",
+    "@types/lodash": "^4.14.191",
     "@types/moment": "^2.13.0",
     "@types/react-modal": "^3.13.1",
     "@types/react-router-dom": "^5.3.3",

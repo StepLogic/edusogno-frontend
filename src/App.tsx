@@ -25,8 +25,25 @@ function App() {
   });
 
   return (
+    // <Routes>
+    //   <Route path="/landing-inglese/" element={<LandingPage />} />
+    // </Routes>
     <Routes>
-      <Route path="/landing-inglese/" element={<LandingPage />} />
+      <Route path="/" element={<DefaultLayout />}>
+        {/* <Route index element={<Navigate to="agenda" replace={true} />} /> */}
+        <Route path="agenda" element={<Agenda />}>
+          <Route index element={<Main />} />
+          <Route path="event" element={<EventDetails />} />
+        </Route>
+        <Route
+          path="*"
+          element={
+            <div className="flex flex-col justify-center items-center h-full text-3xl">
+              Coming Soon
+            </div>
+          }
+        />
+      </Route>
     </Routes>
   );
 }
